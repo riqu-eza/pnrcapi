@@ -2,38 +2,38 @@
 // ResortCities Data Models
 // ====================
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+
 
 generator client {
-  provider = "prisma-client-js"
+provider = "prisma-client-js"
 }
-
+datasource db {
+provider = "postgresql"
+url      = env("DATABASE_URL")
+}
 // ====================
 // ENUMS
 // ====================
 
 enum PlaceStatus {
-  PENDING
-  ACTIVE
-  SUSPENDED
-  ARCHIVED
+PENDING
+ACTIVE
+SUSPENDED
+ARCHIVED
 }
 
 enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
+PENDING
+CONFIRMED
+CANCELLED
+COMPLETED
 }
 
 enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
+PENDING
+COMPLETED
+FAILED
+REFUNDED
 }
 
 // ====================
@@ -41,85 +41,85 @@ enum PaymentStatus {
 // ====================
 
 model City {
-  id           String    @id @default(cuid())
-  name         String
-  slug         String    @unique
-  country      String
-  region       String?
-  latitude     Float?
-  longitude    Float?
-  coverImage   String?
-  description  String?
-  isActive     Boolean   @default(true)
+id String @id @default(cuid())
+name String
+slug String @unique
+country String
+region String?
+latitude Float?
+longitude Float?
+coverImage String?
+description String?
+isActive Boolean @default(true)
 
-  // Denormalized stats for fast reads
-  totalPlaces  Int       @default(0)
-  totalEvents  Int       @default(0)
-  categoryCounts Json?   // { dining: 100, accommodation: 50 }
+  bookings Booking[]
+// Denormalized stats for fast reads
+totalPlaces Int @default(0)
+totalEvents Int @default(0)
+categoryCounts Json? // { dining: 100, accommodation: 50 }
 
-  // Relations
-  places       Place[]
-  events       Event[]
-  blogPosts    BlogPost[]
-  categories   CityCategory[]
+// Relations
+places Place[]
+events Event[]
+blogPosts BlogPost[]
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 
-  @@index([slug])
-  @@index([country, region])
-  @@index([isActive])
-  @@index([latitude, longitude])
+@@index([slug])
+@@index([country, region])
+@@index([isActive])
+@@index([latitude, longitude])
 }
 
 model Place {
-  id                String       @id @default(cuid())
-  name              String
-  slug              String       @unique
-  shortDescription  String?
-  description       String?
-  
-  // Location
-  cityId            String
-  city              City         @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  address           String?
-  latitude          Float?
-  longitude         Float?
-  area              String?
+id String @id @default(cuid())
+name String
+slug String @unique
+shortDescription String?
+description String?
 
-  // Contact & Visual
-  contact           Json?        // { phone, email, website }
-  images            Json?        // [{ url, caption, isPrimary, order }]
-  coverImage        String?
+// Location
+cityId String
+city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
+address String?
+latitude Float?
+longitude Float?
+area String?
 
-  // Taxonomy & attributes
-  taxonomy          String[]     // ["accommodation", "hotel"]
-  attributes        Json?        // Flexible schema per category
-  isBookable        Boolean      @default(false)
-  pricing           Json?        // { min, max, unit }
+// Contact & Visual
+contact Json? // { phone, email, website }
+images Json? // [{ url, caption, isPrimary, order }]
+coverImage String?
 
-  // Operational & status
-  status            PlaceStatus  @default(PENDING)
-  verificationLevel Int          @default(0) // 0-3
-  stats             Json?        // { rating, reviews, bookings }
-  bookingSettings   Json?        // { advanceNotice, minDuration, maxDuration, cancellationPolicy }
+// Taxonomy & attributes
+taxonomy String[] // ["accommodation", "hotel"]
+attributes Json? // Flexible schema per category
+isBookable Boolean @default(false)
+pricing Json? // { min, max, unit }
+  categoryLinks PlaceCategory[]
+// Operational & status
+status PlaceStatus @default(PENDING)
+verificationLevel Int @default(0) // 0-3
+stats Json? // { rating, reviews, bookings }
+bookingSettings Json? // { advanceNotice, minDuration, maxDuration, cancellationPolicy }
 
-  ownerId           String?
-  
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  expiresAt         DateTime?
-  tags              String[]
-  searchKeywords    String[]
+ownerId String?
 
-  bookings          Booking[]
-  reviews           Review[]
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+expiresAt DateTime?
+tags String[]
+searchKeywords String[]
 
-  @@index([cityId, status])
-  @@index([taxonomy], type: Gin)
-  @@index([isBookable])
-  @@index([latitude, longitude])
-  @@index([slug])
+bookings Booking[]
+reviews Review[]
+
+@@index([cityId, status])
+@@index([taxonomy], type: Gin)
+@@index([isBookable])
+@@index([latitude, longitude])
+@@index([slug])
 }
 
 // ====================
@@ -127,30 +127,34 @@ model Place {
 // ====================
 
 model Category {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  parentId    String?    @relation("CategoryParent", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryParent")
+  id        String @id @default(cuid())
+  name      String
+  slug      String @unique
+
+  parentId  String?
+  parent    Category? @relation("CategoryParent", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryParent")
+
   icon        String?
   description String?
   sortOrder   Int?
-  isActive    Boolean    @default(true)
+  isActive    Boolean @default(true)
 
-  places      Place[]    @relation("PlaceCategories", references: [id], through: PlaceCategory)
+  placeLinks  PlaceCategory[]
 
   @@index([slug])
   @@index([isActive])
 }
 
+
 model PlaceCategory {
-  placeId     String
-  categoryId  String
+placeId String
+categoryId String
 
-  place       Place      @relation(fields: [placeId], references: [id])
-  category    Category   @relation(fields: [categoryId], references: [id])
+place Place @relation(fields: [placeId], references: [id])
+category Category @relation(fields: [categoryId], references: [id])
 
-  @@id([placeId, categoryId])
+@@id([placeId, categoryId])
 }
 
 // ====================
@@ -158,74 +162,89 @@ model PlaceCategory {
 // ====================
 
 model AppUser {
-  id                  String      @id @default(cuid())
-  email               String      @unique
-  passwordHash        String
-  phone               String?
+id String @id @default(cuid())
+email String @unique
+passwordHash String
+phone String?
 
-  profile             Json?       // { firstName, lastName, avatar, bio }
-  roles               String[]    // ["tourist", "business_owner", "admin"]
-  permissions         String[]
-  locationPreferences Json?       // { homeCity, favoriteCities, preferredCategories }
-  stats               Json?       // { listingsCount, bookingsCount, reviewsCount }
-  settings            Json?       // { notifications, privacy }
+profile Json? // { firstName, lastName, avatar, bio }
+roles String[] // ["tourist", "business_owner", "admin"]
+permissions String[]
+locationPreferences Json? // { homeCity, favoriteCities, preferredCategories }
+stats Json? // { listingsCount, bookingsCount, reviewsCount }
+settings Json? // { notifications, privacy }
+isActive Boolean @default(true)
+emailVerified Boolean @default(false)
+lastLoginAt DateTime?
 
-  businessProfile     Json?       // Embedded business info
-  bookings            Booking[]
-  payments            Payment[]
-  reviews             Review[]
+businessProfile Json? // Embedded business info
+bookings Booking[]
+payments Payment[]
+reviews Review[]
 
-  createdAt           DateTime    @default(now())
+refreshTokens       RefreshToken[]
+
+createdAt DateTime @default(now())
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String
+  userId    String
+  user      AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
 }
 
 model Booking {
-  id          String       @id @default(cuid())
-  placeId     String
-  userId      String
-  cityId      String
+id String @id @default(cuid())
+placeId String
+userId String
+cityId String
 
-  place       Place        @relation(fields: [placeId], references: [id])
-  user        AppUser      @relation(fields: [userId], references: [id])
-  city        City         @relation(fields: [cityId], references: [id])
+place Place @relation(fields: [placeId], references: [id])
+user AppUser @relation(fields: [userId], references: [id])
+city City @relation(fields: [cityId], references: [id])
 
-  startDate   DateTime
-  endDate     DateTime
-  guests      Json?        // { adults, children, infants }
-  specialRequests String?
-  
-  pricing     Json?        // { base, taxes, fees, discount, total, currency }
-  status      BookingStatus @default(PENDING)
-  cancellationReason String?
+startDate DateTime
+endDate DateTime
+guests Json? // { adults, children, infants }
+specialRequests String?
 
-  payment     Payment?
+pricing Json? // { base, taxes, fees, discount, total, currency }
+status BookingStatus @default(PENDING)
+cancellationReason String?
 
-  createdAt   DateTime     @default(now())
-  confirmedAt DateTime?
-  cancelledAt DateTime?
-  completedAt DateTime?
+payment Payment?
 
-  @@index([userId, status])
-  @@index([placeId, startDate])
+createdAt DateTime @default(now())
+confirmedAt DateTime?
+cancelledAt DateTime?
+completedAt DateTime?
+
+@@index([userId, status])
+@@index([placeId, startDate])
 }
 
 model Payment {
-  id          String       @id @default(cuid())
-  bookingId   String
-  userId      String
+id String @id @default(cuid())
+bookingId String @unique
+userId String
 
-  booking     Booking      @relation(fields: [bookingId], references: [id])
-  user        AppUser      @relation(fields: [userId], references: [id])
+booking Booking @relation(fields: [bookingId], references: [id])
+user AppUser @relation(fields: [userId], references: [id])
 
-  amount      Float
-  currency    String
-  method      String       // "mpesa", "card", etc
-  provider    String       // "stripe", "pesapal", etc
-  transactionId String?
-  mpesaDetails Json?       // { phoneNumber, transactionCode, receiptNumber }
-  status      PaymentStatus @default(PENDING)
-  metadata    Json?
+amount Float
+currency String
+method String // "mpesa", "card", etc
+provider String // "stripe", "pesapal", etc
+transactionId String?
+mpesaDetails Json? // { phoneNumber, transactionCode, receiptNumber }
+status PaymentStatus @default(PENDING)
+metadata Json?
 
-  createdAt   DateTime     @default(now())
+createdAt DateTime @default(now())
 }
 
 // ====================
@@ -233,59 +252,59 @@ model Payment {
 // ====================
 
 model BlogPost {
-  id          String      @id @default(cuid())
-  title       String
-  slug        String      @unique
-  content     String
-  excerpt     String?
-  featuredImage String?
-  authorId    String
-  categories  String[]    // Category slugs
-  tags        String[]
-  relatedCityId String?
-  relatedListings String[]
-  stats       Json?
-  metaTitle   String?
-  metaDescription String?
-  status      String
-  publishedAt DateTime?
+id String @id @default(cuid())
+title String
+slug String @unique
+content String
+excerpt String?
+featuredImage String?
+authorId String
+categories String[] // Category slugs
+tags String[]
+relatedCityId String?
+relatedListings String[]
+stats Json?
+metaTitle String?
+metaDescription String?
+status String
+publishedAt DateTime?
 
-  city        City?       @relation(fields: [relatedCityId], references: [id])
+city City? @relation(fields: [relatedCityId], references: [id])
 }
 
 model Event {
-  id          String      @id @default(cuid())
-  name        String
-  description String?
-  organizerId String
-  cityId      String
-  startDate   DateTime
-  endDate     DateTime
-  isRecurring Boolean    @default(false)
-  recurrencePattern String?
-  location    Json?      // { type, venueId, address, coordinates }
-  ticketInfo  Json?      // { isFree, price, currency, url, capacity, sold }
+id String @id @default(cuid())
+name String
+description String?
+organizerId String
+cityId String
+startDate DateTime
+endDate DateTime
+isRecurring Boolean @default(false)
+recurrencePattern String?
+location Json? // { type, venueId, address, coordinates }
+ticketInfo Json? // { isFree, price, currency, url, capacity, sold }
 
-  city        City       @relation(fields: [cityId], references: [id])
+city City @relation(fields: [cityId], references: [id])
 }
 
 model Review {
-  id          String       @id @default(cuid())
-  placeId     String
-  userId      String
-  bookingId   String?
-  rating      Int          @default(0)
-  title       String?
-  content     String?
-  pros        String[]
-  cons        String[]
-  specificRatings Json?   // { cleanliness, service, value, location }
-  isVerified  Boolean     @default(false)
-  helpfulCount Int        @default(0)
-  status      String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+id String @id @default(cuid())
+placeId String
+userId String
+bookingId String?
+rating Int @default(0)
+title String?
+content String?
+pros String[]
+cons String[]
+specificRatings Json? // { cleanliness, service, value, location }
+isVerified Boolean @default(false)
+helpfulCount Int @default(0)
+status String
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
 
-  place       Place       @relation(fields: [placeId], references: [id])
-  user        AppUser     @relation(fields: [userId], references: [id])
+place Place @relation(fields: [placeId], references: [id])
+user AppUser @relation(fields: [userId], references: [id])
 }
