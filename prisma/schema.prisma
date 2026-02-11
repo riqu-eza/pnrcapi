@@ -103,249 +103,249 @@ enum EventCategory {
 // ====================
 
 model City {
-id String @id @default(cuid())
-name String
-slug String @unique
-country String
-region String?
-latitude Float?
-longitude Float?
-coverImage String?
-description String?
-isActive Boolean @default(true)
+  id                                                         String      @id @default(cuid())
+  name                                                       String
+  slug                                                       String      @unique
+  country                                                    String
+  region                                                     String?
+  latitude                                                   Float?
+  longitude                                                  Float?
+  coverImage                                                 String?
+  description                                                String?
+  isActive                                                   Boolean     @default(true)
 
-  bookings Booking[]
-// Denormalized stats for fast reads
-totalPlaces Int @default(0)
-totalEvents Int @default(0)
-categoryCounts Json? // { dining: 100, accommodation: 50 }
+  bookings                                                   Booking[]
+  // Denormalized stats for fast reads
+  totalPlaces                                                Int         @default(0)
+  totalEvents                                                Int         @default(0)
+  categoryCounts Json? // { dining: 100, accommodation: 50 }
 
-// Relations
-places Place[]
-events Event[]
-blogPosts BlogPost[]
+  //                                                         Relations
+  places                                                     Place[]
+  events                                                     Event[]
+  blogPosts                                                  BlogPost[]
 
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+  createdAt                                                  DateTime    @default(now())
+  updatedAt                                                  DateTime    @updatedAt
 
-@@index([slug])
-@@index([country, region])
-@@index([isActive])
-@@index([latitude, longitude])
+  @@index([slug])
+  @@index([country,                                          region])
+  @@index([isActive])
+  @@index([latitude,                                         longitude])
 }
 
 model Place {
-id String @id @default(cuid())
-name String
-slug String @unique
-shortDescription String?
-description String?
+  id                                                                                       String                      @id @default(cuid())
+  name                                                                                     String
+  slug                                                                                     String                      @unique
+  shortDescription                                                                         String?
+  description                                                                              String?
 
-// Location
-cityId String
-city City @relation(fields: [cityId], references: [id], onDelete: Cascade)
-address String?
-latitude Float?
-longitude Float?
-area String?
+  //                                                                                       Location
+  cityId                                                                                   String
+  city                                                                                     City                       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  address                                                                                  String?
+  latitude                                                                                 Float?
+  longitude                                                                                Float?
+  area                                                                                     String?
 
-// Contact & Visual
-contact Json? // { phone, email, website }
-images Json? // [{ url, caption, isPrimary, order }]
-coverImage String?
+  // Contact & Visual
+  contact Json? // { phone, email, website }
+  images Json? // [{ url, caption, isPrimary, order }]
+  coverImage                                                                               String?
 
-// Taxonomy & attributes
-taxonomy String[] // ["accommodation", "hotel"]
-attributes Json? // Flexible schema per category
-isBookable Boolean @default(false)
-pricing Json? // { min, max, unit }
-  categoryLinks PlaceCategory[]
-// Operational & status
-status PlaceStatus @default(PENDING)
-verificationLevel Int @default(0) // 0-3
-stats Json? // { rating, reviews, bookings }
-bookingSettings Json? // { advanceNotice, minDuration, maxDuration, cancellationPolicy }
+  // Taxonomy & attributes
+  taxonomy String[] // ["accommodation", "hotel"]
+  attributes Json? // Flexible schema per category
+  isBookable                                                                               Boolean                     @default(false)
+  pricing Json? // { min, max, unit }
+  categoryLinks                                                                            PlaceCategory[]
+  // Operational & status
+  status                                                                                   PlaceStatus                 @default(PENDING)
+  verificationLevel                                                                        Int                         @default(0) // 0-3
+  stats Json? // { rating, reviews, bookings }
+  bookingSettings Json? // { advanceNotice, minDuration, maxDuration, cancellationPolicy }
 
-ownerId String?
+  ownerId                                                                                  String?
 
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
-expiresAt DateTime?
-tags String[]
-searchKeywords String[]
+  createdAt                                                                                DateTime                    @default(now())
+  updatedAt                                                                                DateTime                    @updatedAt
+  expiresAt                                                                                DateTime?
+  tags                                                                                     String[]
+  searchKeywords                                                                           String[]
 
-bookings Booking[]
-reviews Review[]
+  bookings                                                                                 Booking[]
+  reviews                                                                                  Review[]
 
-rooms               AccommodationRoom[]
-  
+  rooms                                                                                    AccommodationRoom[]
+
   // Dining nested data
-  menuItems           DiningMenuItem[]
-  menuSections        DiningMenuSection[]
-  
-  // Entertainment nested data
-  shows               EntertainmentShow[]
-  performances        EntertainmentPerformance[]
-  
-  // Cultural nested data
-  exhibitions         CulturalExhibition[]
-  artifacts           CulturalArtifact[]
+  menuItems                                                                                DiningMenuItem[]
+  menuSections                                                                             DiningMenuSection[]
 
-@@index([cityId, status])
-@@index([taxonomy], type: Gin)
-@@index([isBookable])
-@@index([latitude, longitude])
-@@index([slug])
+  // Entertainment nested data
+  shows                                                                                    EntertainmentShow[]
+  performances                                                                             EntertainmentPerformance[]
+
+  // Cultural nested data
+  exhibitions                                                                              CulturalExhibition[]
+  artifacts                                                                                CulturalArtifact[]
+
+  @@index([cityId,                                                                         status])
+  @@index([taxonomy], type: Gin)
+  @@index([isBookable])
+  @@index([latitude,                                                                       longitude])
+  @@index([slug])
 }
 
 model AccommodationRoom {
-  id              String     @id @default(cuid())
-  placeId         String
-  place           Place      @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
+  id                                                                                                               String              @id @default(cuid())
+  placeId                                                                                                          String
+  place                                                                                                            Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
   // Basic Info
-  name            String
-  description     String?
-  roomType        RoomType
-  roomNumber      String?
-  floor           Int?
-  
-  // Capacity
-  maxGuests       Int        @default(2)
-  maxAdults       Int        @default(2)
-  maxChildren     Int        @default(0)
-  
-  // Beds
-  beds            AccommodationBed[]
-  
+  name                                                                                                             String
+  description                                                                                                      String?
+  roomType                                                                                                         RoomType
+  roomNumber                                                                                                       String?
+  floor                                                                                                            Int?
+
+  //                                                                                                               Capacity
+  maxGuests                                                                                                        Int                 @default(2)
+  maxAdults                                                                                                        Int                 @default(2)
+  maxChildren                                                                                                      Int                 @default(0)
+
+  //                                                                                                               Beds
+  beds                                                                                                             AccommodationBed[]
+
   // Size & Features
-  sizeSquareMeters Float?
-  hasBalcony      Boolean    @default(false)
-  hasKitchen      Boolean    @default(false)
-  hasLivingRoom   Boolean    @default(false)
-  
+  sizeSquareMeters                                                                                                 Float?
+  hasBalcony                                                                                                       Boolean             @default(false)
+  hasKitchen                                                                                                       Boolean             @default(false)
+  hasLivingRoom                                                                                                    Boolean             @default(false)
+
   // Amenities (specific to room)
   amenities       String[]   // ["WiFi", "TV", "Minibar", "Safe", "AC"]
-  
-  // Pricing
-  basePrice       Float
-  weekendPrice    Float?
-  currency        String     @default("KES")
-  
+
+  //                                                                                                               Pricing
+  basePrice                                                                                                        Float
+  weekendPrice                                                                                                     Float?
+  currency                                                                                                         String              @default("KES")
+
   // Seasonal Pricing (JSONB for flexibility)
   seasonalPricing Json?      // [{ season: "high", startDate: "2024-12-01", endDate: "2025-01-15", price: 20000 }]
-  
-  // Availability
-  isAvailable     Boolean    @default(true)
-  
+
+  //                                                                                                               Availability
+  isAvailable                                                                                                      Boolean             @default(true)
+
   // Images specific to this room
-  images          String[]
-  
+  images                                                                                                           String[]
+
   // Extra metadata
   metadata        Json?      // { viewType: "Ocean", bathrooms: 2, bathroomType: "ensuite" }
-  
-  sortOrder       Int        @default(0)
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  
-  @@index([placeId, isAvailable])
+
+  sortOrder                                                                                                        Int                 @default(0)
+  createdAt                                                                                                        DateTime            @default(now())
+  updatedAt                                                                                                        DateTime            @updatedAt
+
+  @@index([placeId,                                                                                                isAvailable])
   @@index([roomType])
   @@index([basePrice])
   @@index([maxGuests])
 }
 
 model AccommodationBed {
-  id        String            @id @default(cuid())
-  roomId    String
-  room      AccommodationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  
-  bedType   BedType
-  quantity  Int               @default(1)
-  
+  id       String             @id @default(cuid())
+  roomId   String
+  room     AccommodationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  bedType  BedType
+  quantity Int                @default(1)
+
   @@index([roomId])
 }
 
 model DiningMenuSection {
-  id          String           @id @default(cuid())
-  placeId     String
-  place       Place            @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
+  id                                                                      String            @id @default(cuid())
+  placeId                                                                 String
+  place                                                                   Place            @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
   name        String           // "Appetizers", "Main Course", "Desserts"
-  description String?
-  
-  menuItems   DiningMenuItem[]
-  
-  sortOrder   Int              @default(0)
-  isActive    Boolean          @default(true)
-  
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  
-  @@index([placeId, isActive])
+  description                                                             String?
+
+  menuItems                                                               DiningMenuItem[]
+
+  sortOrder                                                               Int               @default(0)
+  isActive                                                                Boolean           @default(true)
+
+  createdAt                                                               DateTime          @default(now())
+  updatedAt                                                               DateTime          @updatedAt
+
+  @@index([placeId,                                                       isActive])
 }
 
 model DiningMenuItem {
-  id              String              @id @default(cuid())
-  placeId         String
-  place           Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
-  sectionId       String?
-  section         DiningMenuSection?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
-  
+  id                                                                                                     String              @id @default(cuid())
+  placeId                                                                                                String
+  place                                                                                                  Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  sectionId                                                                                              String?
+  section                                                                                                DiningMenuSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
   // Basic Info
-  name            String
-  description     String?
-  
-  // Classification
-  mealType        MealType
-  cuisineType     CuisineType?
-  
+  name                                                                                                   String
+  description                                                                                            String?
+
+  //                                                                                                     Classification
+  mealType                                                                                               MealType
+  cuisineType                                                                                            CuisineType?
+
   // Ingredients & Allergens
-  ingredients     String[]
+  ingredients                                                                                            String[]
   allergens       String[]            // ["Gluten", "Dairy", "Nuts", "Shellfish", "Eggs"]
-  
+
   // Dietary Info
-  dietaryOptions  DietaryOption[]
-  spicyLevel      Int?                @default(0) // 0-5
-  isVegetarian    Boolean             @default(false)
-  isVegan         Boolean             @default(false)
-  isGlutenFree    Boolean             @default(false)
-  
-  // Preparation
+  dietaryOptions                                                                                         DietaryOption[]
+  spicyLevel                                                                                             Int?                @default(0) // 0-5
+  isVegetarian                                                                                           Boolean             @default(false)
+  isVegan                                                                                                Boolean             @default(false)
+  isGlutenFree                                                                                           Boolean             @default(false)
+
+  //                                                                                                     Preparation
   prepTime        Int?                // minutes
-  calories        Int?
+  calories                                                                                               Int?
   servingSize     String?             // "250g", "500ml"
-  
-  // Pricing
-  price           Float
-  currency        String              @default("KES")
-  
+
+  //                                                                                                     Pricing
+  price                                                                                                  Float
+  currency                                                                                               String              @default("KES")
+
   // Pricing variations (JSONB)
   priceVariations Json?               // [{ size: "small", price: 800 }, { size: "large", price: 1200 }]
-  
-  // Availability
-  isAvailable     Boolean             @default(true)
+
+  //                                                                                                     Availability
+  isAvailable                                                                                            Boolean             @default(true)
   availableDays   String[]            // ["monday", "tuesday", ...]
   availableHours  Json?               // { start: "11:00", end: "22:00" }
-  
+
   // Special Tags
-  isSignatureDish Boolean             @default(false)
-  isChefSpecial   Boolean             @default(false)
-  isSeasonalDish  Boolean             @default(false)
-  
-  // Images
-  images          String[]
-  
-  // Extras
+  isSignatureDish                                                                                        Boolean             @default(false)
+  isChefSpecial                                                                                          Boolean             @default(false)
+  isSeasonalDish                                                                                         Boolean             @default(false)
+
+  //                                                                                                     Images
+  images                                                                                                 String[]
+
+  //                                                                                                     Extras
   pairsWith       String[]            // ["Red Wine", "White Wine", "Cocktails"]
-  
-  metadata        Json?
-  sortOrder       Int                 @default(0)
-  
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
-  @@index([placeId, isAvailable])
+
+  metadata                                                                                               Json?
+  sortOrder                                                                                              Int                 @default(0)
+
+  createdAt                                                                                              DateTime            @default(now())
+  updatedAt                                                                                              DateTime            @updatedAt
+
+  @@index([placeId,                                                                                      isAvailable])
   @@index([mealType])
   @@index([cuisineType])
   @@index([price])
@@ -355,81 +355,81 @@ model DiningMenuItem {
 
 
 model EntertainmentShow {
-  id              String                      @id @default(cuid())
-  placeId         String
-  place           Place                       @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
+  id                                                                                         String                      @id @default(cuid())
+  placeId                                                                                    String
+  place                                                                                      Place                      @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
   // Basic Info
-  name            String
-  description     String?
-  category        EventCategory
-  
+  name                                                                                       String
+  description                                                                                String?
+  category                                                                                   EventCategory
+
   // Duration & Schedule
-  durationMinutes Int
-  isRecurring     Boolean                     @default(false)
-  
-  // Performers/Cast
-  performers      String[]
-  director        String?
-  producer        String?
-  
+  durationMinutes                                                                            Int
+  isRecurring                                                                                Boolean                     @default(false)
+
+  //                                                                                         Performers/Cast
+  performers                                                                                 String[]
+  director                                                                                   String?
+  producer                                                                                   String?
+
   // Venue Info
-  venueCapacity   Int?
+  venueCapacity                                                                              Int?
   seatingType     String?                     // "Reserved", "General Admission", "Standing"
-  
-  // Pricing
+
+  //                                                                                         Pricing
   ticketPricing   Json                        // { general: 1500, vip: 3000, student: 1000 }
-  
-  // Schedule
-  performances    EntertainmentPerformance[]
-  
-  // Media
-  images          String[]
-  trailerUrl      String?
-  
+
+  //                                                                                         Schedule
+  performances                                                                               EntertainmentPerformance[]
+
+  //                                                                                         Media
+  images                                                                                     String[]
+  trailerUrl                                                                                 String?
+
   // Additional Info
   ageRating       String?                     // "PG", "PG-13", "18+"
-  language        String?
-  subtitles       String[]
-  
-  metadata        Json?
-  isActive        Boolean                     @default(true)
-  
-  createdAt       DateTime                    @default(now())
-  updatedAt       DateTime                    @updatedAt
-  
-  @@index([placeId, isActive])
+  language                                                                                   String?
+  subtitles                                                                                  String[]
+
+  metadata                                                                                   Json?
+  isActive                                                                                   Boolean                     @default(true)
+
+  createdAt                                                                                  DateTime                    @default(now())
+  updatedAt                                                                                  DateTime                    @updatedAt
+
+  @@index([placeId,                                                                          isActive])
   @@index([category])
 }
 
 model EntertainmentPerformance {
-  id              String              @id @default(cuid())
-  showId          String
-  show            EntertainmentShow   @relation(fields: [showId], references: [id], onDelete: Cascade)
-  
-  placeId         String
-  place           Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
-  // Schedule
-  startDateTime   DateTime
-  endDateTime     DateTime
-  
-  // Availability
-  availableSeats  Int
-  totalSeats      Int
-  
+  id             String             @id @default(cuid())
+  showId         String
+  show           EntertainmentShow @relation(fields: [showId], references: [id], onDelete: Cascade)
+
+  placeId        String
+  place          Place             @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  //             Schedule
+  startDateTime  DateTime
+  endDateTime    DateTime
+
+  //             Availability
+  availableSeats Int
+  totalSeats     Int
+
   // Pricing (can override show pricing)
-  ticketPricing   Json?
-  
-  // Status
-  isSoldOut       Boolean             @default(false)
-  isCancelled     Boolean             @default(false)
-  
-  metadata        Json?
-  
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
+  ticketPricing  Json?
+
+  //             Status
+  isSoldOut      Boolean            @default(false)
+  isCancelled    Boolean            @default(false)
+
+  metadata       Json?
+
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
   @@index([placeId])
   @@index([showId])
   @@index([startDateTime])
@@ -438,113 +438,113 @@ model EntertainmentPerformance {
 
 
 model CulturalExhibition {
-  id              String              @id @default(cuid())
-  placeId         String
-  place           Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
+  id                                                                                             String              @id @default(cuid())
+  placeId                                                                                        String
+  place                                                                                          Place              @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
   // Basic Info
-  name            String
-  description     String?
-  theme           String?
-  
+  name                                                                                           String
+  description                                                                                    String?
+  theme                                                                                          String?
+
   // Curator Info
-  curator         String?
-  organization    String?
-  
-  // Duration
-  startDate       DateTime
-  endDate         DateTime
-  isPermanent     Boolean             @default(false)
-  
+  curator                                                                                        String?
+  organization                                                                                   String?
+
+  //                                                                                             Duration
+  startDate                                                                                      DateTime
+  endDate                                                                                        DateTime
+  isPermanent                                                                                    Boolean             @default(false)
+
   // Artifacts in this exhibition
-  artifacts       CulturalArtifact[]
-  
-  // Pricing
-  entryFee        Float?
-  currency        String              @default("KES")
-  hasFreeEntry    Boolean             @default(false)
+  artifacts                                                                                      CulturalArtifact[]
+
+  //                                                                                             Pricing
+  entryFee                                                                                       Float?
+  currency                                                                                       String              @default("KES")
+  hasFreeEntry                                                                                   Boolean             @default(false)
   freeEntryDays   String[]            // ["sunday", "tuesday"]
-  
+
   // Guided Tours
-  hasGuidedTours  Boolean             @default(false)
+  hasGuidedTours                                                                                 Boolean             @default(false)
   tourSchedule    Json?               // { times: ["10:00", "14:00"], duration: 60, price: 500 }
-  
-  // Media
-  images          String[]
-  virtualTourUrl  String?
-  
+
+  //                                                                                             Media
+  images                                                                                         String[]
+  virtualTourUrl                                                                                 String?
+
   // Additional Info
-  audioGuide      Boolean             @default(false)
-  languages       String[]
-  
-  metadata        Json?
-  isActive        Boolean             @default(true)
-  
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  
-  @@index([placeId, isActive])
-  @@index([startDate, endDate])
+  audioGuide                                                                                     Boolean             @default(false)
+  languages                                                                                      String[]
+
+  metadata                                                                                       Json?
+  isActive                                                                                       Boolean             @default(true)
+
+  createdAt                                                                                      DateTime            @default(now())
+  updatedAt                                                                                      DateTime            @updatedAt
+
+  @@index([placeId,                                                                              isActive])
+  @@index([startDate,                                                                            endDate])
   @@index([isPermanent])
 }
 
 model CulturalArtifact {
-  id              String               @id @default(cuid())
-  placeId         String
-  place           Place                @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  
-  exhibitionId    String?
-  exhibition      CulturalExhibition?  @relation(fields: [exhibitionId], references: [id], onDelete: SetNull)
-  
+  id                                                                                       String               @id @default(cuid())
+  placeId                                                                                  String
+  place                                                                                    Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  exhibitionId                                                                             String?
+  exhibition                                                                               CulturalExhibition? @relation(fields: [exhibitionId], references: [id], onDelete: SetNull)
+
   // Basic Info
-  name            String
-  description     String?
-  
-  // Classification
+  name                                                                                     String
+  description                                                                              String?
+
+  //                                                                                       Classification
   category        String               // "Painting", "Sculpture", "Artifact", "Document"
   period          String?              // "Ancient", "Medieval", "Modern"
   era             String?              // "15th Century", "Bronze Age"
-  
-  // Origin
+
+  //                                                                                       Origin
   origin          String?              // Country/region
   culture         String?              // "Swahili", "Kikuyu", "Egyptian"
-  yearCreated     Int?
-  
-  // Creator
-  artist          String?
-  maker           String?
-  
+  yearCreated                                                                              Int?
+
+  //                                                                                       Creator
+  artist                                                                                   String?
+  maker                                                                                    String?
+
   // Physical Properties
   materials       String[]             // ["Bronze", "Wood", "Canvas", "Oil Paint"]
   dimensions      Json?                // { height: 120, width: 80, depth: 5, unit: "cm" }
-  weight          Float?
-  
+  weight                                                                                   Float?
+
   // Condition & Conservation
   condition       String?              // "Excellent", "Good", "Fair", "Restored"
-  conservationNotes String?
-  
-  // Display
+  conservationNotes                                                                        String?
+
+  //                                                                                       Display
   location        String?              // "Gallery 2, Wall A"
-  isOnDisplay     Boolean              @default(true)
-  
-  // Media
-  images          String[]
-  has3DModel      Boolean              @default(false)
-  model3DUrl      String?
-  
+  isOnDisplay                                                                              Boolean              @default(true)
+
+  //                                                                                       Media
+  images                                                                                   String[]
+  has3DModel                                                                               Boolean              @default(false)
+  model3DUrl                                                                               String?
+
   // Historical Significance
-  historicalValue String?
-  significance    String?
-  
-  // Acquisition
-  acquisitionDate DateTime?
+  historicalValue                                                                          String?
+  significance                                                                             String?
+
+  //                                                                                       Acquisition
+  acquisitionDate                                                                          DateTime?
   acquisitionMethod String?            // "Purchase", "Donation", "Archaeological Find"
-  
-  metadata        Json?
-  
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  
+
+  metadata                                                                                 Json?
+
+  createdAt                                                                                DateTime             @default(now())
+  updatedAt                                                                                DateTime             @updatedAt
+
   @@index([placeId])
   @@index([exhibitionId])
   @@index([category])
@@ -555,18 +555,18 @@ model CulturalArtifact {
 // ====================
 
 model Category {
-  id        String @id @default(cuid())
-  name      String
-  slug      String @unique
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
 
-  parentId  String?
-  parent    Category? @relation("CategoryParent", fields: [parentId], references: [id])
-  children  Category[] @relation("CategoryParent")
+  parentId    String?
+  parent      Category?       @relation("CategoryParent", fields: [parentId], references: [id])
+  children    Category[]      @relation("CategoryParent")
 
   icon        String?
   description String?
   sortOrder   Int?
-  isActive    Boolean @default(true)
+  isActive    Boolean          @default(true)
 
   placeLinks  PlaceCategory[]
 
@@ -576,13 +576,13 @@ model Category {
 
 
 model PlaceCategory {
-placeId String
-categoryId String
+  placeId    String
+  categoryId String
 
-place Place @relation(fields: [placeId], references: [id])
-category Category @relation(fields: [categoryId], references: [id])
+  place      Place    @relation(fields: [placeId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
 
-@@id([placeId, categoryId])
+  @@id([placeId, categoryId])
 }
 
 // ====================
@@ -590,89 +590,89 @@ category Category @relation(fields: [categoryId], references: [id])
 // ====================
 
 model AppUser {
-id String @id @default(cuid())
-email String @unique
-passwordHash String
-phone String?
+  id                                                                             String          @id @default(cuid())
+  email                                                                          String          @unique
+  passwordHash                                                                   String
+  phone                                                                          String?
 
-profile Json? // { firstName, lastName, avatar, bio }
-roles String[] // ["tourist", "business_owner", "admin"]
-permissions String[]
-locationPreferences Json? // { homeCity, favoriteCities, preferredCategories }
-stats Json? // { listingsCount, bookingsCount, reviewsCount }
-settings Json? // { notifications, privacy }
-isActive Boolean @default(true)
-emailVerified Boolean @default(false)
-lastLoginAt DateTime?
+  profile Json? // { firstName, lastName, avatar, bio }
+  roles String[] // ["tourist", "business_owner", "admin"]
+  permissions                                                                    String[]
+  locationPreferences Json? // { homeCity, favoriteCities, preferredCategories }
+  stats Json? // { listingsCount, bookingsCount, reviewsCount }
+  settings Json? // { notifications, privacy }
+  isActive                                                                       Boolean         @default(true)
+  emailVerified                                                                  Boolean         @default(false)
+  lastLoginAt                                                                    DateTime?
 
-businessProfile Json? // Embedded business info
-bookings Booking[]
-payments Payment[]
-reviews Review[]
+  businessProfile Json? // Embedded business info
+  bookings                                                                       Booking[]
+  payments                                                                       Payment[]
+  reviews                                                                        Review[]
 
-refreshTokens       RefreshToken[]
+  refreshTokens                                                                  RefreshToken[]
 
-createdAt DateTime @default(now())
+  createdAt                                                                      DateTime        @default(now())
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   tokenHash String
   userId    String
-  user      AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
   revokedAt DateTime?
 }
 
 model Booking {
-id String @id @default(cuid())
-placeId String
-userId String
-cityId String
+  id                                                                String         @id @default(cuid())
+  placeId                                                           String
+  userId                                                            String
+  cityId                                                            String
 
-place Place @relation(fields: [placeId], references: [id])
-user AppUser @relation(fields: [userId], references: [id])
-city City @relation(fields: [cityId], references: [id])
+  place                                                             Place         @relation(fields: [placeId], references: [id])
+  user                                                              AppUser       @relation(fields: [userId], references: [id])
+  city                                                              City          @relation(fields: [cityId], references: [id])
 
-startDate DateTime
-endDate DateTime
-guests Json? // { adults, children, infants }
-specialRequests String?
+  startDate                                                         DateTime
+  endDate                                                           DateTime
+  guests Json? // { adults, children, infants }
+  specialRequests                                                   String?
 
-pricing Json? // { base, taxes, fees, discount, total, currency }
-status BookingStatus @default(PENDING)
-cancellationReason String?
+  pricing Json? // { base, taxes, fees, discount, total, currency }
+  status                                                            BookingStatus  @default(PENDING)
+  cancellationReason                                                String?
 
-payment Payment?
+  payment                                                           Payment?
 
-createdAt DateTime @default(now())
-confirmedAt DateTime?
-cancelledAt DateTime?
-completedAt DateTime?
+  createdAt                                                         DateTime       @default(now())
+  confirmedAt                                                       DateTime?
+  cancelledAt                                                       DateTime?
+  completedAt                                                       DateTime?
 
-@@index([userId, status])
-@@index([placeId, startDate])
+  @@index([userId,                                                  status])
+  @@index([placeId,                                                 startDate])
 }
 
 model Payment {
-id String @id @default(cuid())
-bookingId String @unique
-userId String
+  id                                                                    String         @id @default(cuid())
+  bookingId                                                             String         @unique
+  userId                                                                String
 
-booking Booking @relation(fields: [bookingId], references: [id])
-user AppUser @relation(fields: [userId], references: [id])
+  booking                                                               Booking       @relation(fields: [bookingId], references: [id])
+  user                                                                  AppUser       @relation(fields: [userId], references: [id])
 
-amount Float
-currency String
-method String // "mpesa", "card", etc
-provider String // "stripe", "pesapal", etc
-transactionId String?
-mpesaDetails Json? // { phoneNumber, transactionCode, receiptNumber }
-status PaymentStatus @default(PENDING)
-metadata Json?
+  amount                                                                Float
+  currency                                                              String
+  method String // "mpesa", "card", etc
+  provider String // "stripe", "pesapal", etc
+  transactionId                                                         String?
+  mpesaDetails Json? // { phoneNumber, transactionCode, receiptNumber }
+  status                                                                PaymentStatus  @default(PENDING)
+  metadata                                                              Json?
 
-createdAt DateTime @default(now())
+  createdAt                                                             DateTime       @default(now())
 }
 
 // ====================
@@ -680,59 +680,59 @@ createdAt DateTime @default(now())
 // ====================
 
 model BlogPost {
-id String @id @default(cuid())
-title String
-slug String @unique
-content String
-excerpt String?
-featuredImage String?
-authorId String
-categories String[] // Category slugs
-tags String[]
-relatedCityId String?
-relatedListings String[]
-stats Json?
-metaTitle String?
-metaDescription String?
-status String
-publishedAt DateTime?
+  id                                    String     @id @default(cuid())
+  title                                 String
+  slug                                  String     @unique
+  content                               String
+  excerpt                               String?
+  featuredImage                         String?
+  authorId                              String
+  categories String[] // Category slugs
+  tags                                  String[]
+  relatedCityId                         String?
+  relatedListings                       String[]
+  stats                                 Json?
+  metaTitle                             String?
+  metaDescription                       String?
+  status                                String
+  publishedAt                           DateTime?
 
-city City? @relation(fields: [relatedCityId], references: [id])
+  city                                  City?     @relation(fields: [relatedCityId], references: [id])
 }
 
 model Event {
-id String @id @default(cuid())
-name String
-description String?
-organizerId String
-cityId String
-startDate DateTime
-endDate DateTime
-isRecurring Boolean @default(false)
-recurrencePattern String?
-location Json? // { type, venueId, address, coordinates }
-ticketInfo Json? // { isFree, price, currency, url, capacity, sold }
+  id                                                                   String    @id @default(cuid())
+  name                                                                 String
+  description                                                          String?
+  organizerId                                                          String
+  cityId                                                               String
+  startDate                                                            DateTime
+  endDate                                                              DateTime
+  isRecurring                                                          Boolean   @default(false)
+  recurrencePattern                                                    String?
+  location Json? // { type, venueId, address, coordinates }
+  ticketInfo Json? // { isFree, price, currency, url, capacity, sold }
 
-city City @relation(fields: [cityId], references: [id])
+  city                                                                 City     @relation(fields: [cityId], references: [id])
 }
 
 model Review {
-id String @id @default(cuid())
-placeId String
-userId String
-bookingId String?
-rating Int @default(0)
-title String?
-content String?
-pros String[]
-cons String[]
-specificRatings Json? // { cleanliness, service, value, location }
-isVerified Boolean @default(false)
-helpfulCount Int @default(0)
-status String
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+  id                                                                 String    @id @default(cuid())
+  placeId                                                            String
+  userId                                                             String
+  bookingId                                                          String?
+  rating                                                             Int       @default(0)
+  title                                                              String?
+  content                                                            String?
+  pros                                                               String[]
+  cons                                                               String[]
+  specificRatings Json? // { cleanliness, service, value, location }
+  isVerified                                                         Boolean   @default(false)
+  helpfulCount                                                       Int       @default(0)
+  status                                                             String
+  createdAt                                                          DateTime  @default(now())
+  updatedAt                                                          DateTime  @updatedAt
 
-place Place @relation(fields: [placeId], references: [id])
-user AppUser @relation(fields: [userId], references: [id])
+  place                                                              Place    @relation(fields: [placeId], references: [id])
+  user                                                               AppUser  @relation(fields: [userId], references: [id])
 }

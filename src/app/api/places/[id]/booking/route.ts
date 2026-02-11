@@ -23,7 +23,13 @@ export async function PATCH(request: Request, { params }: Params) {
       );
     }
 
-    const place = await updatePlaceBooking(id, parsed.data);
+    // Normalize parsed.data so `pricing` is undefined instead of null to match UpdatePlaceBookingData
+    const updateData = {
+      ...parsed.data,
+      pricing: parsed.data.pricing ?? undefined,
+    };
+
+    const place = await updatePlaceBooking(id, updateData);
 
     return NextResponse.json({ status: 'success', data: place }, { status: 200 });
   } catch (error: any) {
