@@ -36,6 +36,68 @@ FAILED
 REFUNDED
 }
 
+enum RoomType {
+  SINGLE
+  DOUBLE
+  TWIN
+  SUITE
+  FAMILY
+  PENTHOUSE
+  DORMITORY
+}
+
+enum BedType {
+  SINGLE
+  DOUBLE
+  QUEEN
+  KING
+  BUNK
+  SOFA_BED
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  BRUNCH
+  SNACK
+  DESSERT
+  BEVERAGE
+}
+
+enum CuisineType {
+  AFRICAN
+  SWAHILI
+  ITALIAN
+  CHINESE
+  INDIAN
+  JAPANESE
+  MEXICAN
+  MEDITERRANEAN
+  FUSION
+  INTERNATIONAL
+}
+
+enum DietaryOption {
+  VEGETARIAN
+  VEGAN
+  GLUTEN_FREE
+  DAIRY_FREE
+  HALAL
+  KOSHER
+  NUT_FREE
+}
+
+enum EventCategory {
+  CONCERT
+  THEATER
+  SPORTS
+  COMEDY
+  FESTIVAL
+  EXHIBITION
+  WORKSHOP
+}
+
 // ====================
 // CORE ENTITIES
 // ====================
@@ -115,6 +177,20 @@ searchKeywords String[]
 bookings Booking[]
 reviews Review[]
 
+rooms               AccommodationRoom[]
+  
+  // Dining nested data
+  menuItems           DiningMenuItem[]
+  menuSections        DiningMenuSection[]
+  
+  // Entertainment nested data
+  shows               EntertainmentShow[]
+  performances        EntertainmentPerformance[]
+  
+  // Cultural nested data
+  exhibitions         CulturalExhibition[]
+  artifacts           CulturalArtifact[]
+
 @@index([cityId, status])
 @@index([taxonomy], type: Gin)
 @@index([isBookable])
@@ -122,6 +198,358 @@ reviews Review[]
 @@index([slug])
 }
 
+model AccommodationRoom {
+  id              String     @id @default(cuid())
+  placeId         String
+  place           Place      @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name            String
+  description     String?
+  roomType        RoomType
+  roomNumber      String?
+  floor           Int?
+  
+  // Capacity
+  maxGuests       Int        @default(2)
+  maxAdults       Int        @default(2)
+  maxChildren     Int        @default(0)
+  
+  // Beds
+  beds            AccommodationBed[]
+  
+  // Size & Features
+  sizeSquareMeters Float?
+  hasBalcony      Boolean    @default(false)
+  hasKitchen      Boolean    @default(false)
+  hasLivingRoom   Boolean    @default(false)
+  
+  // Amenities (specific to room)
+  amenities       String[]   // ["WiFi", "TV", "Minibar", "Safe", "AC"]
+  
+  // Pricing
+  basePrice       Float
+  weekendPrice    Float?
+  currency        String     @default("KES")
+  
+  // Seasonal Pricing (JSONB for flexibility)
+  seasonalPricing Json?      // [{ season: "high", startDate: "2024-12-01", endDate: "2025-01-15", price: 20000 }]
+  
+  // Availability
+  isAvailable     Boolean    @default(true)
+  
+  // Images specific to this room
+  images          String[]
+  
+  // Extra metadata
+  metadata        Json?      // { viewType: "Ocean", bathrooms: 2, bathroomType: "ensuite" }
+  
+  sortOrder       Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  @@index([placeId, isAvailable])
+  @@index([roomType])
+  @@index([basePrice])
+  @@index([maxGuests])
+}
+
+model AccommodationBed {
+  id        String            @id @default(cuid())
+  roomId    String
+  room      AccommodationRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  bedType   BedType
+  quantity  Int               @default(1)
+  
+  @@index([roomId])
+}
+
+model DiningMenuSection {
+  id          String           @id @default(cuid())
+  placeId     String
+  place       Place            @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  name        String           // "Appetizers", "Main Course", "Desserts"
+  description String?
+  
+  menuItems   DiningMenuItem[]
+  
+  sortOrder   Int              @default(0)
+  isActive    Boolean          @default(true)
+  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  
+  @@index([placeId, isActive])
+}
+
+model DiningMenuItem {
+  id              String              @id @default(cuid())
+  placeId         String
+  place           Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  sectionId       String?
+  section         DiningMenuSection?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  
+  // Basic Info
+  name            String
+  description     String?
+  
+  // Classification
+  mealType        MealType
+  cuisineType     CuisineType?
+  
+  // Ingredients & Allergens
+  ingredients     String[]
+  allergens       String[]            // ["Gluten", "Dairy", "Nuts", "Shellfish", "Eggs"]
+  
+  // Dietary Info
+  dietaryOptions  DietaryOption[]
+  spicyLevel      Int?                @default(0) // 0-5
+  isVegetarian    Boolean             @default(false)
+  isVegan         Boolean             @default(false)
+  isGlutenFree    Boolean             @default(false)
+  
+  // Preparation
+  prepTime        Int?                // minutes
+  calories        Int?
+  servingSize     String?             // "250g", "500ml"
+  
+  // Pricing
+  price           Float
+  currency        String              @default("KES")
+  
+  // Pricing variations (JSONB)
+  priceVariations Json?               // [{ size: "small", price: 800 }, { size: "large", price: 1200 }]
+  
+  // Availability
+  isAvailable     Boolean             @default(true)
+  availableDays   String[]            // ["monday", "tuesday", ...]
+  availableHours  Json?               // { start: "11:00", end: "22:00" }
+  
+  // Special Tags
+  isSignatureDish Boolean             @default(false)
+  isChefSpecial   Boolean             @default(false)
+  isSeasonalDish  Boolean             @default(false)
+  
+  // Images
+  images          String[]
+  
+  // Extras
+  pairsWith       String[]            // ["Red Wine", "White Wine", "Cocktails"]
+  
+  metadata        Json?
+  sortOrder       Int                 @default(0)
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@index([placeId, isAvailable])
+  @@index([mealType])
+  @@index([cuisineType])
+  @@index([price])
+  @@index([isVegetarian])
+  @@index([isVegan])
+}
+
+
+model EntertainmentShow {
+  id              String                      @id @default(cuid())
+  placeId         String
+  place           Place                       @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name            String
+  description     String?
+  category        EventCategory
+  
+  // Duration & Schedule
+  durationMinutes Int
+  isRecurring     Boolean                     @default(false)
+  
+  // Performers/Cast
+  performers      String[]
+  director        String?
+  producer        String?
+  
+  // Venue Info
+  venueCapacity   Int?
+  seatingType     String?                     // "Reserved", "General Admission", "Standing"
+  
+  // Pricing
+  ticketPricing   Json                        // { general: 1500, vip: 3000, student: 1000 }
+  
+  // Schedule
+  performances    EntertainmentPerformance[]
+  
+  // Media
+  images          String[]
+  trailerUrl      String?
+  
+  // Additional Info
+  ageRating       String?                     // "PG", "PG-13", "18+"
+  language        String?
+  subtitles       String[]
+  
+  metadata        Json?
+  isActive        Boolean                     @default(true)
+  
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+  
+  @@index([placeId, isActive])
+  @@index([category])
+}
+
+model EntertainmentPerformance {
+  id              String              @id @default(cuid())
+  showId          String
+  show            EntertainmentShow   @relation(fields: [showId], references: [id], onDelete: Cascade)
+  
+  placeId         String
+  place           Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  // Schedule
+  startDateTime   DateTime
+  endDateTime     DateTime
+  
+  // Availability
+  availableSeats  Int
+  totalSeats      Int
+  
+  // Pricing (can override show pricing)
+  ticketPricing   Json?
+  
+  // Status
+  isSoldOut       Boolean             @default(false)
+  isCancelled     Boolean             @default(false)
+  
+  metadata        Json?
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@index([placeId])
+  @@index([showId])
+  @@index([startDateTime])
+}
+
+
+
+model CulturalExhibition {
+  id              String              @id @default(cuid())
+  placeId         String
+  place           Place               @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name            String
+  description     String?
+  theme           String?
+  
+  // Curator Info
+  curator         String?
+  organization    String?
+  
+  // Duration
+  startDate       DateTime
+  endDate         DateTime
+  isPermanent     Boolean             @default(false)
+  
+  // Artifacts in this exhibition
+  artifacts       CulturalArtifact[]
+  
+  // Pricing
+  entryFee        Float?
+  currency        String              @default("KES")
+  hasFreeEntry    Boolean             @default(false)
+  freeEntryDays   String[]            // ["sunday", "tuesday"]
+  
+  // Guided Tours
+  hasGuidedTours  Boolean             @default(false)
+  tourSchedule    Json?               // { times: ["10:00", "14:00"], duration: 60, price: 500 }
+  
+  // Media
+  images          String[]
+  virtualTourUrl  String?
+  
+  // Additional Info
+  audioGuide      Boolean             @default(false)
+  languages       String[]
+  
+  metadata        Json?
+  isActive        Boolean             @default(true)
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  
+  @@index([placeId, isActive])
+  @@index([startDate, endDate])
+  @@index([isPermanent])
+}
+
+model CulturalArtifact {
+  id              String               @id @default(cuid())
+  placeId         String
+  place           Place                @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  
+  exhibitionId    String?
+  exhibition      CulturalExhibition?  @relation(fields: [exhibitionId], references: [id], onDelete: SetNull)
+  
+  // Basic Info
+  name            String
+  description     String?
+  
+  // Classification
+  category        String               // "Painting", "Sculpture", "Artifact", "Document"
+  period          String?              // "Ancient", "Medieval", "Modern"
+  era             String?              // "15th Century", "Bronze Age"
+  
+  // Origin
+  origin          String?              // Country/region
+  culture         String?              // "Swahili", "Kikuyu", "Egyptian"
+  yearCreated     Int?
+  
+  // Creator
+  artist          String?
+  maker           String?
+  
+  // Physical Properties
+  materials       String[]             // ["Bronze", "Wood", "Canvas", "Oil Paint"]
+  dimensions      Json?                // { height: 120, width: 80, depth: 5, unit: "cm" }
+  weight          Float?
+  
+  // Condition & Conservation
+  condition       String?              // "Excellent", "Good", "Fair", "Restored"
+  conservationNotes String?
+  
+  // Display
+  location        String?              // "Gallery 2, Wall A"
+  isOnDisplay     Boolean              @default(true)
+  
+  // Media
+  images          String[]
+  has3DModel      Boolean              @default(false)
+  model3DUrl      String?
+  
+  // Historical Significance
+  historicalValue String?
+  significance    String?
+  
+  // Acquisition
+  acquisitionDate DateTime?
+  acquisitionMethod String?            // "Purchase", "Donation", "Archaeological Find"
+  
+  metadata        Json?
+  
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  
+  @@index([placeId])
+  @@index([exhibitionId])
+  @@index([category])
+  @@index([isOnDisplay])
+}
 // ====================
 // CATEGORIES
 // ====================
