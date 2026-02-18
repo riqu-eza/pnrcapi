@@ -592,7 +592,8 @@ model PlaceCategory {
 model AppUser {
   id                                                                             String          @id @default(cuid())
   email                                                                          String          @unique
-  passwordHash                                                                   String
+  passwordHash                                                                   String?
+
   phone                                                                          String?
 
   profile Json? // { firstName, lastName, avatar, bio }
@@ -611,8 +612,22 @@ model AppUser {
   reviews                                                                        Review[]
 
   refreshTokens                                                                  RefreshToken[]
-
+  identities                                                                     AuthIdentity[]
+  blogPosts     BlogPost[]
+  blogComments  BlogComment[]
   createdAt                                                                      DateTime        @default(now())
+}
+
+model AuthIdentity {
+  id                                   String    @id @default(cuid())
+  provider      String   // "google"
+  providerId    String   // Google sub
+  userId                               String
+  user                                 AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt                            DateTime  @default(now())
+
+  @@unique([provider,                  providerId])
 }
 
 model RefreshToken {
@@ -678,27 +693,111 @@ model Payment {
 // ====================
 // CONTENT
 // ====================
-
 model BlogPost {
-  id                                    String     @id @default(cuid())
-  title                                 String
-  slug                                  String     @unique
-  content                               String
-  excerpt                               String?
-  featuredImage                         String?
-  authorId                              String
-  categories String[] // Category slugs
-  tags                                  String[]
-  relatedCityId                         String?
-  relatedListings                       String[]
-  stats                                 Json?
-  metaTitle                             String?
-  metaDescription                       String?
-  status                                String
-  publishedAt                           DateTime?
-
-  city                                  City?     @relation(fields: [relatedCityId], references: [id])
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  content         String    @db.Text // Better for long content
+  excerpt         String?   @db.VarChar(500)
+  featuredImage   String?
+  
+  // Author relation (proper FK)
+  authorId        String
+  author          AppUser   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Categories & Tags
+  categories      String[]  // Category slugs for filtering
+  tags            String[]  // Free-form tags
+  
+  // Related content
+  relatedCityId   String?
+  city            City?     @relation(fields: [relatedCityId], references: [id], onDelete: SetNull)
+  
+  relatedPlaceIds String[]  // Changed from relatedListings to be more explicit
+  
+  // Analytics (embedded JSON for flexibility)
+  stats           Json?     // { views: 0, shares: 0, likes: 0, avgReadTime: 0, uniqueVisitors: 0 }
+  
+  // SEO
+  metaTitle       String?   @db.VarChar(60)
+  metaDescription String?   @db.VarChar(160)
+  metaKeywords    String[]  // Additional SEO keywords
+  
+  // Publishing
+  status          BlogStatus @default(DRAFT)
+  publishedAt     DateTime?
+  scheduledFor    DateTime?  // Separate field for clarity
+  
+  // Tracking
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastEditedAt    DateTime  @updatedAt
+  lastEditedBy    String?   // Track who made last edit
+  
+  // Soft delete (better than hard delete)
+  deletedAt       DateTime?
+  
+  // Version control (optional but useful)
+  version         Int       @default(1)
+  
+  // Comments relation
+  comments        BlogComment[]
+  
+  // Reading time (calculated on save)
+  readingTimeMinutes Int?
+  
+  // Featured/pinned posts
+  isFeatured      Boolean   @default(false)
+  isPinned        Boolean   @default(false)
+  pinnedUntil     DateTime?
+  
+  @@index([slug])
+  @@index([authorId])
+  @@index([status, publishedAt])
+  @@index([relatedCityId])
+  @@index([categories], type: Gin)
+  @@index([tags], type: Gin)
+  @@index([isFeatured, isPinned])
+  @@index([deletedAt]) // For soft delete queries
 }
+
+// Add BlogStatus enum
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+// New model for blog comments (optional feature)
+model BlogComment {
+  id            String      @id @default(cuid())
+  postId        String
+  post          BlogPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          AppUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content       String      @db.Text
+  
+  // Nested comments
+  parentId      String?
+  parent        BlogComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       BlogComment[] @relation("CommentReplies")
+  
+  // Moderation
+  isApproved    Boolean     @default(false)
+  isFlagged     Boolean     @default(false)
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  deletedAt     DateTime?   // Soft delete
+  
+  @@index([postId, isApproved])
+  @@index([userId])
+  @@index([parentId])
+}
+
 
 model Event {
   id                                                                   String    @id @default(cuid())
