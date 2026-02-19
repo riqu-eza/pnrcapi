@@ -48,7 +48,7 @@ export function validateBlogPost(data: BlogPostInput): ValidationResult {
   }
 
   // Status validation
-  if (data.status && !["draft", "published", "scheduled"].includes(data.status)) {
+  if (data.status && !["DRAFT", "PUBLISHED", "SCHEDULED", "ARCHIVED"].includes(data.status)) {
     errors.status = "Status must be draft, published, or scheduled";
   }
 

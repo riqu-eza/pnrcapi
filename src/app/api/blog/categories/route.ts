@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { BlogStatus } from "@prisma/client";
 
 // GET /api/blog/categories?slug=travel-tips&page=1&limit=10
 export async function GET(req: Request) {
@@ -16,7 +17,7 @@ export async function GET(req: Request) {
   const skip = (page - 1) * limit;
 
   const where = {
-    status: "published",
+    status: BlogStatus.PUBLISHED,
     publishedAt: { lte: new Date() },
     categories: { has: categorySlug },
   };

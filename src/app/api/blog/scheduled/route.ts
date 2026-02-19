@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
   const scheduledPosts = await prisma.blogPost.findMany({
     where: {
-      status: "scheduled",
+      status: "SCHEDULED",
       publishedAt: { gt: new Date() },
     },
     orderBy: { publishedAt: "asc" },

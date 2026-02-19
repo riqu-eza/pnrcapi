@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const skip = (page - 1) * limit;
 
   const where = {
-    status: "published",
+    status: "PUBLISHED" as const,
     publishedAt: { lte: new Date() },
     tags: { has: tagSlug },
   };

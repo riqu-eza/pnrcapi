@@ -32,9 +32,9 @@ export async function GET(req: Request) {
     allPosts,
   ] = await Promise.all([
     prisma.blogPost.count(),
-    prisma.blogPost.count({ where: { status: "published" } }),
-    prisma.blogPost.count({ where: { status: "draft" } }),
-    prisma.blogPost.count({ where: { status: "scheduled" } }),
+    prisma.blogPost.count({ where: { status: "PUBLISHED" } }),
+    prisma.blogPost.count({ where: { status: "DRAFT" } }),
+    prisma.blogPost.count({ where: { status: "SCHEDULED" } }),
     prisma.blogPost.findMany({
       select: { stats: true },
     }),
@@ -48,7 +48,7 @@ export async function GET(req: Request) {
 
   // Get most viewed posts
   const mostViewedPosts = await prisma.blogPost.findMany({
-    where: { status: "published" },
+    where: { status: "PUBLISHED" },
     orderBy: { publishedAt: "desc" },
     take: 100,
     select: {

@@ -99,7 +99,15 @@ export async function GET(
   }
 
   // Get related places if any
-  let relatedPlaces = [];
+  let relatedPlaces: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    shortDescription: string | null;
+    coverImage: string | null;
+    taxonomy: string[];
+    cityId: string;
+  }> = [];
   if (post.relatedPlaceIds.length > 0) {
     relatedPlaces = await prisma.place.findMany({
       where: {

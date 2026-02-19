@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-const ACCESS_TOKEN_TTL = "15m";
+const ACCESS_TOKEN_TTL = "120m";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 

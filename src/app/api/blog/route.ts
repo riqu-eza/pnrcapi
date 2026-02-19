@@ -8,7 +8,7 @@ import { ensureUniqueSlug, generateSlug } from "@/lib/blog/slug";
 // GET /api/blog - List posts with author & city info
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  
+  console.log("Received GET /api/blog with params:", Object.fromEntries(searchParams.entries()));
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "10");
   const category = searchParams.get("category");
@@ -101,7 +101,7 @@ export async function GET(req: Request) {
       },
     },
   });
-
+console.log(`Fetched ${posts.length} posts out of total ${total}`);
   // Transform author profile for easier access
   const transformedPosts = posts.map(post => ({
     ...post,
@@ -294,7 +294,7 @@ export async function POST(req: Request) {
 }
 
 function getOrderBy(sortBy: string, order: string) {
-  const orderDir = order === "asc" ? "asc" : "desc";
+  const orderDir = (order === "asc" ? ("asc" as const) : ("desc" as const));
   
   switch (sortBy) {
     case "title":
