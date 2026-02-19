@@ -11,15 +11,12 @@ import {
 export async function POST(req: Request) {
   const { userId, refreshToken } = await req.json();
 
-  const record = await verifyRefreshToken(
-    refreshToken,
-    userId
-  );
+  const record = await verifyRefreshToken(refreshToken, userId);
 
   if (!record) {
     return NextResponse.json(
       { error: "Invalid refresh token" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 
@@ -30,10 +27,7 @@ export async function POST(req: Request) {
   });
 
   if (!user || !user.isActive) {
-    return NextResponse.json(
-      { error: "User inactive" },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "User inactive" }, { status: 403 });
   }
 
   const newAccessToken = signAccessToken({
@@ -44,10 +38,15 @@ export async function POST(req: Request) {
   });
 
   const newRefreshToken = generateRefreshToken();
-  await storeRefreshToken(user.id, newRefreshToken);
+
+  const newRefreshTokenRecord = await storeRefreshToken(
+    user.id,
+    newRefreshToken,
+  );
 
   return NextResponse.json({
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
+    refreshTokenId: newRefreshTokenRecord.id, 
   });
 }

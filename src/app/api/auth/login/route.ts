@@ -10,39 +10,31 @@ import {
 export async function POST(req: Request) {
   const { email, password } = await req.json();
 
-if (!email || !password) {
+  if (!email || !password) {
     return NextResponse.json(
       { error: "Email and password are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const user = await prisma.appUser.findUnique({
     where: { email },
   });
-if (!user) {
-    return NextResponse.json(
-      { error: "No Email found" },
-      { status: 404 }
-    );
+  if (!user) {
+    return NextResponse.json({ error: "No Email found" }, { status: 404 });
   }
   if (!user || !user.isActive) {
-    return NextResponse.json(
-      { error: "User is inactive" },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "User is inactive" }, { status: 403 });
   }
 
-  const valid = await verifyPassword(
-    user.passwordHash,
-    password
-  );
+  if (!user.passwordHash) {
+    return NextResponse.json({ error: "Invalid Password" }, { status: 401 });
+  }
+
+  const valid = await verifyPassword(user.passwordHash, password);
 
   if (!valid) {
-    return NextResponse.json(
-      { error: "Invalid Password" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Invalid Password" }, { status: 401 });
   }
 
   const accessToken = signAccessToken({
@@ -53,7 +45,8 @@ if (!user) {
   });
 
   const refreshToken = generateRefreshToken();
-  await storeRefreshToken(user.id, refreshToken);
+
+  const refreshTokenRecord = await storeRefreshToken(user.id, refreshToken);
 
   await prisma.appUser.update({
     where: { id: user.id },
@@ -63,6 +56,7 @@ if (!user) {
   return NextResponse.json({
     accessToken,
     refreshToken,
+    refreshTokenId: refreshTokenRecord.id, 
     user: {
       id: user.id,
       email: user.email,
