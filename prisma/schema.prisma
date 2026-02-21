@@ -605,7 +605,8 @@ model AppUser {
   isActive                                                                       Boolean         @default(true)
   emailVerified                                                                  Boolean         @default(false)
   lastLoginAt                                                                    DateTime?
-
+  passwordResetToken                                                             String?
+  passwordResetExpires                                                         DateTime?
   businessProfile Json? // Embedded business info
   bookings                                                                       Booking[]
   payments                                                                       Payment[]
@@ -613,8 +614,8 @@ model AppUser {
 
   refreshTokens                                                                  RefreshToken[]
   identities                                                                     AuthIdentity[]
-  blogPosts     BlogPost[]
-  blogComments  BlogComment[]
+  blogPosts                                                                      BlogPost[]
+  blogComments                                                                   BlogComment[]
   createdAt                                                                      DateTime        @default(now())
 }
 
@@ -694,70 +695,70 @@ model Payment {
 // CONTENT
 // ====================
 model BlogPost {
-  id              String    @id @default(cuid())
-  title           String
-  slug            String    @unique
-  content         String    @db.Text // Better for long content
-  excerpt         String?   @db.VarChar(500)
-  featuredImage   String?
-  
+  id                                                                                                String         @id @default(cuid())
+  title                                                                                             String
+  slug                                                                                              String         @unique
+  content                                                                                           String         @db.Text // Better for long content
+  excerpt                                                                                           String?        @db.VarChar(500)
+  featuredImage                                                                                     String?
+
   // Author relation (proper FK)
-  authorId        String
-  author          AppUser   @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  
+  authorId                                                                                          String
+  author                                                                                            AppUser       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
   // Categories & Tags
   categories      String[]  // Category slugs for filtering
   tags            String[]  // Free-form tags
-  
+
   // Related content
-  relatedCityId   String?
-  city            City?     @relation(fields: [relatedCityId], references: [id], onDelete: SetNull)
-  
+  relatedCityId                                                                                     String?
+  city                                                                                              City?         @relation(fields: [relatedCityId], references: [id], onDelete: SetNull)
+
   relatedPlaceIds String[]  // Changed from relatedListings to be more explicit
-  
+
   // Analytics (embedded JSON for flexibility)
   stats           Json?     // { views: 0, shares: 0, likes: 0, avgReadTime: 0, uniqueVisitors: 0 }
-  
-  // SEO
-  metaTitle       String?   @db.VarChar(60)
-  metaDescription String?   @db.VarChar(160)
+
+  //                                                                                                SEO
+  metaTitle                                                                                         String?        @db.VarChar(60)
+  metaDescription                                                                                   String?        @db.VarChar(160)
   metaKeywords    String[]  // Additional SEO keywords
-  
-  // Publishing
-  status          BlogStatus @default(DRAFT)
-  publishedAt     DateTime?
+
+  //                                                                                                Publishing
+  status                                                                                            BlogStatus     @default(DRAFT)
+  publishedAt                                                                                       DateTime?
   scheduledFor    DateTime?  // Separate field for clarity
-  
-  // Tracking
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  lastEditedAt    DateTime  @updatedAt
+
+  //                                                                                                Tracking
+  createdAt                                                                                         DateTime       @default(now())
+  updatedAt                                                                                         DateTime       @updatedAt
+  lastEditedAt                                                                                      DateTime       @updatedAt
   lastEditedBy    String?   // Track who made last edit
-  
+
   // Soft delete (better than hard delete)
-  deletedAt       DateTime?
-  
+  deletedAt                                                                                         DateTime?
+
   // Version control (optional but useful)
-  version         Int       @default(1)
-  
+  version                                                                                           Int            @default(1)
+
   // Comments relation
-  comments        BlogComment[]
-  
+  comments                                                                                          BlogComment[]
+
   // Reading time (calculated on save)
-  readingTimeMinutes Int?
-  
+  readingTimeMinutes                                                                                Int?
+
   // Featured/pinned posts
-  isFeatured      Boolean   @default(false)
-  isPinned        Boolean   @default(false)
-  pinnedUntil     DateTime?
-  
+  isFeatured                                                                                        Boolean        @default(false)
+  isPinned                                                                                          Boolean        @default(false)
+  pinnedUntil                                                                                       DateTime?
+
   @@index([slug])
   @@index([authorId])
-  @@index([status, publishedAt])
+  @@index([status,                                                                                  publishedAt])
   @@index([relatedCityId])
   @@index([categories], type: Gin)
   @@index([tags], type: Gin)
-  @@index([isFeatured, isPinned])
+  @@index([isFeatured,                                                                              isPinned])
   @@index([deletedAt]) // For soft delete queries
 }
 
@@ -771,29 +772,29 @@ enum BlogStatus {
 
 // New model for blog comments (optional feature)
 model BlogComment {
-  id            String      @id @default(cuid())
-  postId        String
-  post          BlogPost    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  
-  userId        String
-  user          AppUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  content       String      @db.Text
-  
+  id                                       String         @id @default(cuid())
+  postId                                   String
+  post                                     BlogPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId                                   String
+  user                                     AppUser       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content                                  String         @db.Text
+
   // Nested comments
-  parentId      String?
-  parent        BlogComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies       BlogComment[] @relation("CommentReplies")
-  
-  // Moderation
-  isApproved    Boolean     @default(false)
-  isFlagged     Boolean     @default(false)
-  
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  parentId                                 String?
+  parent                                   BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies                                  BlogComment[] @relation("CommentReplies")
+
+  //                                       Moderation
+  isApproved                               Boolean        @default(false)
+  isFlagged                                Boolean        @default(false)
+
+  createdAt                                DateTime       @default(now())
+  updatedAt                                DateTime       @updatedAt
   deletedAt     DateTime?   // Soft delete
-  
-  @@index([postId, isApproved])
+
+  @@index([postId,                         isApproved])
   @@index([userId])
   @@index([parentId])
 }
