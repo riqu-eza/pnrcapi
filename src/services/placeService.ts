@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import { Prisma, PlaceStatus } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { Prisma, PlaceStatus } from "@prisma/client";
 
 export interface PlaceFilters {
   cityId?: string;
@@ -23,18 +23,18 @@ export interface CreatePlaceData {
 }
 
 export interface UpdatePlaceBasicData {
-  name?: string;
-  slug?: string;
-  shortDescription?: string;
-  description?: string;
-  area?: string;
+  name?: string | null;
+  slug?: string | null;
+  shortDescription?: string   | null;
+  description?: string  | null;
+  area?: string | null;
 }
 
 export interface UpdatePlaceLocationData {
-  address?: string;
-  latitude?: number;
-  longitude?: number;
-  area?: string;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  area?: string | null;
 }
 
 export interface UpdatePlaceContactData {
@@ -42,7 +42,7 @@ export interface UpdatePlaceContactData {
     phone?: string;
     email?: string;
     website?: string;
-  };
+  } | null;
 }
 
 export interface UpdatePlaceAttributesData {
@@ -55,8 +55,8 @@ export interface UpdatePlaceMediaData {
     caption?: string;
     isPrimary?: boolean;
     order?: number;
-  }>;
-  coverImage?: string;
+  }> | null;
+  coverImage?: string | null;
 }
 
 export interface UpdatePlaceBookingData {
@@ -66,13 +66,13 @@ export interface UpdatePlaceBookingData {
     max?: number;
     unit?: string;
     currency?: string;
-  };
+  } | null;
   bookingSettings?: {
     advanceNotice?: number;
     minDuration?: number;
     maxDuration?: number;
     cancellationPolicy?: string;
-  };
+  } | null;
 }
 
 export interface UpdatePlaceTaxonomyData {
@@ -82,7 +82,11 @@ export interface UpdatePlaceTaxonomyData {
 }
 
 // List places with filters
-export async function listPlaces(filters: PlaceFilters = {}, page = 1, limit = 20) {
+export async function listPlaces(
+  filters: PlaceFilters = {},
+  page = 1,
+  limit = 20,
+) {
   const {
     cityId,
     status,
@@ -119,8 +123,8 @@ export async function listPlaces(filters: PlaceFilters = {}, page = 1, limit = 2
 
   if (search) {
     where.OR = [
-      { name: { contains: search, mode: 'insensitive' } },
-      { description: { contains: search, mode: 'insensitive' } },
+      { name: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
       { searchKeywords: { hasSome: [search.toLowerCase()] } },
     ];
   }
@@ -131,7 +135,7 @@ export async function listPlaces(filters: PlaceFilters = {}, page = 1, limit = 2
     if (minPrice !== undefined) {
       priceFilters.push({
         pricing: {
-          path: ['min'],
+          path: ["min"],
           gte: minPrice,
         },
       });
@@ -139,7 +143,7 @@ export async function listPlaces(filters: PlaceFilters = {}, page = 1, limit = 2
     if (maxPrice !== undefined) {
       priceFilters.push({
         pricing: {
-          path: ['max'],
+          path: ["max"],
           lte: maxPrice,
         },
       });
@@ -200,7 +204,7 @@ export async function listPlaces(filters: PlaceFilters = {}, page = 1, limit = 2
       },
       skip,
       take: limit,
-      orderBy: [{ createdAt: 'desc' }],
+      orderBy: [{ createdAt: "desc" }],
     }),
     prisma.place.count({ where }),
   ]);
@@ -233,7 +237,7 @@ export async function getPlaceById(id: string) {
       },
       reviews: {
         take: 10,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: {
             select: {
@@ -273,7 +277,7 @@ export async function getPlaceBySlug(slug: string) {
       },
       reviews: {
         take: 10,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         include: {
           user: {
             select: {
@@ -306,7 +310,7 @@ export async function createDraftPlace(data: CreatePlaceData) {
   });
 
   if (!city) {
-    throw new Error('City not found');
+    throw new Error("City not found");
   }
 
   // Verify category exists
@@ -315,14 +319,14 @@ export async function createDraftPlace(data: CreatePlaceData) {
   });
 
   if (!category) {
-    throw new Error('Category not found');
+    throw new Error("Category not found");
   }
 
   // Generate slug from name
   const slug = name
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
   // Check slug uniqueness
   const existingSlug = await prisma.place.findUnique({
@@ -361,13 +365,16 @@ export async function createDraftPlace(data: CreatePlaceData) {
 }
 
 // Update basic info
-export async function updatePlaceBasicInfo(id: string, data: UpdatePlaceBasicData) {
+export async function updatePlaceBasicInfo(
+  id: string,
+  data: UpdatePlaceBasicData,
+) {
   const existing = await prisma.place.findUnique({
     where: { id },
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   // Check slug uniqueness if updating
@@ -377,7 +384,7 @@ export async function updatePlaceBasicInfo(id: string, data: UpdatePlaceBasicDat
     });
 
     if (slugExists) {
-      throw new Error('Slug already exists');
+      throw new Error("Slug already exists");
     }
   }
 
@@ -406,13 +413,16 @@ export async function updatePlaceBasicInfo(id: string, data: UpdatePlaceBasicDat
 }
 
 // Update location
-export async function updatePlaceLocation(id: string, data: UpdatePlaceLocationData) {
+export async function updatePlaceLocation(
+  id: string,
+  data: UpdatePlaceLocationData,
+) {
   const existing = await prisma.place.findUnique({
     where: { id },
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   const place = await prisma.place.update({
@@ -429,13 +439,16 @@ export async function updatePlaceLocation(id: string, data: UpdatePlaceLocationD
 }
 
 // Update contact info
-export async function updatePlaceContact(id: string, data: UpdatePlaceContactData) {
+export async function updatePlaceContact(
+  id: string,
+  data: UpdatePlaceContactData,
+) {
   const existing = await prisma.place.findUnique({
     where: { id },
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   const place = await prisma.place.update({
@@ -451,14 +464,14 @@ export async function updatePlaceContact(id: string, data: UpdatePlaceContactDat
 // Update attributes (JSONB)
 export async function updatePlaceAttributes(
   id: string,
-  data: UpdatePlaceAttributesData
+  data: UpdatePlaceAttributesData,
 ) {
   const existing = await prisma.place.findUnique({
     where: { id },
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   // TODO: Add validation based on category schema
@@ -476,43 +489,48 @@ export async function updatePlaceAttributes(
 }
 
 // Update media
+
 export async function updatePlaceMedia(id: string, data: UpdatePlaceMediaData) {
   const existing = await prisma.place.findUnique({
     where: { id },
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   const place = await prisma.place.update({
     where: { id },
     data: {
-      ...(data.images !== undefined && { images: data.images }),
+      ...(data.images !== undefined && {
+        images: data.images === null ? Prisma.JsonNull : data.images,
+      }),
       ...(data.coverImage !== undefined && { coverImage: data.coverImage }),
     },
   });
 
   return place;
 }
-
 // Update booking settings
-export async function updatePlaceBooking(id: string, data: UpdatePlaceBookingData) {
+export async function updatePlaceBooking(
+  id: string,
+  data: UpdatePlaceBookingData,
+) {
   const existing = await prisma.place.findUnique({
     where: { id },
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   const place = await prisma.place.update({
     where: { id },
     data: {
       ...(data.isBookable !== undefined && { isBookable: data.isBookable }),
-      ...(data.pricing !== undefined && { pricing: data.pricing }),
+      ...(data.pricing !== undefined && { pricing: data.pricing || Prisma.JsonNull }),
       ...(data.bookingSettings !== undefined && {
-        bookingSettings: data.bookingSettings,
+        bookingSettings: data.bookingSettings || Prisma.JsonNull,
       }),
     },
   });
@@ -521,13 +539,16 @@ export async function updatePlaceBooking(id: string, data: UpdatePlaceBookingDat
 }
 
 // Update taxonomy and categories
-export async function updatePlaceTaxonomy(id: string, data: UpdatePlaceTaxonomyData) {
+export async function updatePlaceTaxonomy(
+  id: string,
+  data: UpdatePlaceTaxonomyData,
+) {
   const existing = await prisma.place.findUnique({
     where: { id },
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   const place = await prisma.place.update({
@@ -551,7 +572,7 @@ export async function linkPlaceToCategories(id: string, categoryIds: string[]) {
   });
 
   if (!existing) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   // Remove existing links
@@ -595,21 +616,24 @@ export async function validatePlace(id: string) {
   });
 
   if (!place) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   const missing: string[] = [];
 
   // Basic validations
-  if (!place.name) missing.push('name');
-  if (!place.description) missing.push('description');
-  if (!place.cityId) missing.push('cityId');
-  if (!place.coverImage && (!place.images || (place.images as any[]).length === 0)) {
-    missing.push('coverImage or images');
+  if (!place.name) missing.push("name");
+  if (!place.description) missing.push("description");
+  if (!place.cityId) missing.push("cityId");
+  if (
+    !place.coverImage &&
+    (!place.images || (place.images as any[]).length === 0)
+  ) {
+    missing.push("coverImage or images");
   }
-  if (!place.address) missing.push('address');
-  if (!place.latitude || !place.longitude) missing.push('location coordinates');
-  if (place.categoryLinks.length === 0) missing.push('at least one category');
+  if (!place.address) missing.push("address");
+  if (!place.latitude || !place.longitude) missing.push("location coordinates");
+  if (place.categoryLinks.length === 0) missing.push("at least one category");
 
   // Category-specific validations
   // TODO: Add based on attribute schemas
@@ -626,7 +650,7 @@ export async function submitPlace(id: string) {
 
   if (!validation.isValid) {
     throw new Error(
-      `Cannot submit place. Missing required fields: ${validation.missing.join(', ')}`
+      `Cannot submit place. Missing required fields: ${validation.missing.join(", ")}`,
     );
   }
 
@@ -673,13 +697,13 @@ export async function deletePlace(id: string) {
   });
 
   if (!place) {
-    throw new Error('Place not found');
+    throw new Error("Place not found");
   }
 
   // Check if place has bookings
   if (place._count.bookings > 0) {
     throw new Error(
-      `Cannot delete place. It has ${place._count.bookings} booking(s). Archive it instead.`
+      `Cannot delete place. It has ${place._count.bookings} booking(s). Archive it instead.`,
     );
   }
 
@@ -727,7 +751,7 @@ export async function getPlacesByOwner(ownerId: string, status?: PlaceStatus) {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   return places;

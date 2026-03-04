@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export interface CategoryFilters {
   isActive?: boolean;
@@ -21,8 +21,8 @@ export interface UpdateCategoryData {
   name?: string;
   slug?: string;
   parentId?: string | null;
-  icon?: string;
-  description?: string;
+  icon?: string | null;
+  description?: string | null;
   sortOrder?: number;
   isActive?: boolean;
 }
@@ -54,14 +54,14 @@ export async function listCategories(filters: CategoryFilters = {}) {
   if (includeChildren) {
     include.children = {
       where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sortOrder: "asc" },
     };
   }
 
   const categories = await prisma.category.findMany({
     where,
     include,
-    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
   });
 
   return categories;
@@ -77,19 +77,19 @@ export async function getCategoryTree() {
         include: {
           children: {
             where: { isActive: true },
-            orderBy: { sortOrder: 'asc' },
+            orderBy: { sortOrder: "asc" },
           },
           _count: {
             select: { placeLinks: true },
           },
         },
-        orderBy: { sortOrder: 'asc' },
+        orderBy: { sortOrder: "asc" },
       },
       _count: {
         select: { placeLinks: true },
       },
     },
-    orderBy: { sortOrder: 'asc' },
+    orderBy: { sortOrder: "asc" },
   });
 
   // Return only root categories (those without parents)
@@ -111,7 +111,7 @@ export async function getCategoryById(id: string, includeChildren = false) {
   if (includeChildren) {
     include.children = {
       where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sortOrder: "asc" },
       include: {
         _count: {
           select: { placeLinks: true },
@@ -143,7 +143,7 @@ export async function getCategoryBySlug(slug: string, includeChildren = false) {
   if (includeChildren) {
     include.children = {
       where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sortOrder: "asc" },
       include: {
         _count: {
           select: { placeLinks: true },
@@ -169,7 +169,7 @@ export async function createCategory(data: CreateCategoryData) {
     });
 
     if (!parent) {
-      throw new Error('Parent category not found');
+      throw new Error("Parent category not found");
     }
   }
 
@@ -179,7 +179,7 @@ export async function createCategory(data: CreateCategoryData) {
   });
 
   if (existing) {
-    throw new Error('Category with this slug already exists');
+    throw new Error("Category with this slug already exists");
   }
 
   const category = await prisma.category.create({
@@ -214,12 +214,12 @@ export async function updateCategory(id: string, data: UpdateCategoryData) {
   });
 
   if (!existing) {
-    throw new Error('Category not found');
+    throw new Error("Category not found");
   }
 
   // Prevent circular reference (category cannot be its own parent)
   if (data.parentId === id) {
-    throw new Error('Category cannot be its own parent');
+    throw new Error("Category cannot be its own parent");
   }
 
   // Validate parent exists if parentId provided
@@ -229,13 +229,13 @@ export async function updateCategory(id: string, data: UpdateCategoryData) {
     });
 
     if (!parent) {
-      throw new Error('Parent category not found');
+      throw new Error("Parent category not found");
     }
 
     // Check for circular reference in the hierarchy
     const isCircular = await checkCircularReference(id, data.parentId);
     if (isCircular) {
-      throw new Error('Cannot create circular category hierarchy');
+      throw new Error("Cannot create circular category hierarchy");
     }
   }
 
@@ -246,7 +246,7 @@ export async function updateCategory(id: string, data: UpdateCategoryData) {
     });
 
     if (slugExists) {
-      throw new Error('Category with this slug already exists');
+      throw new Error("Category with this slug already exists");
     }
   }
 
@@ -289,20 +289,20 @@ export async function deleteCategory(id: string, cascade = false) {
   });
 
   if (!category) {
-    throw new Error('Category not found');
+    throw new Error("Category not found");
   }
 
   // Check if category has children
   if (category.children.length > 0 && !cascade) {
     throw new Error(
-      'Cannot delete category with subcategories. Use cascade=true to delete all subcategories.'
+      "Cannot delete category with subcategories. Use cascade=true to delete all subcategories.",
     );
   }
 
   // Check if category is linked to places
   if (category._count.placeLinks > 0) {
     throw new Error(
-      `Cannot delete category. It is linked to ${category._count.placeLinks} place(s). Remove links first.`
+      `Cannot delete category. It is linked to ${category._count.placeLinks} place(s). Remove links first.`,
     );
   }
 
@@ -323,7 +323,7 @@ export async function deleteCategory(id: string, cascade = false) {
 // Helper: Check for circular reference in category hierarchy
 async function checkCircularReference(
   categoryId: string,
-  newParentId: string
+  newParentId: string,
 ): Promise<boolean> {
   let currentId: string | null = newParentId;
 
@@ -332,10 +332,11 @@ async function checkCircularReference(
       return true; // Circular reference detected
     }
 
-    const parent = await prisma.category.findUnique({
-      where: { id: currentId },
-      select: { parentId: true },
-    });
+    const parent: { parentId: string | null } | null =
+      await prisma.category.findUnique({
+        where: { id: currentId },
+        select: { parentId: true },
+      });
 
     currentId = parent?.parentId || null;
   }
@@ -344,12 +345,18 @@ async function checkCircularReference(
 }
 
 // Get category breadcrumb (path from root to category)
+
 export async function getCategoryBreadcrumb(categoryId: string) {
   const breadcrumb: Array<{ id: string; name: string; slug: string }> = [];
   let currentId: string | null = categoryId;
 
   while (currentId) {
-    const category = await prisma.category.findUnique({
+    const category: {
+      id: string;
+      name: string;
+      slug: string;
+      parentId: string | null;
+    } | null = await prisma.category.findUnique({
       where: { id: currentId },
       select: { id: true, name: true, slug: true, parentId: true },
     });
