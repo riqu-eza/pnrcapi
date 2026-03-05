@@ -1,6 +1,6 @@
 import crypto from "crypto";
-import argon2 from "argon2";
 import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 const REFRESH_TOKEN_DAYS = 60;
 
@@ -8,11 +8,12 @@ export function generateRefreshToken() {
   return crypto.randomBytes(64).toString("hex");
 }
 
+const saltRounds = 12;
 export async function storeRefreshToken(
   userId: string,
   token: string
 ) {
-  const tokenHash = await argon2.hash(token);
+  const tokenHash = await bcrypt.hash(token, saltRounds);
 
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_DAYS);
@@ -39,7 +40,7 @@ export async function verifyRefreshToken(
   });
 
   for (const record of tokens) {
-    const valid = await argon2.verify(record.tokenHash, token);
+    const valid = await bcrypt.compare(record.tokenHash, token);
     if (valid) return record;
   }
 
