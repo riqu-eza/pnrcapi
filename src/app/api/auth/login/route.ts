@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid Password" }, { status: 401 });
   }
 
-  const valid = await verifyPassword(user.passwordHash, password);
+  const valid = await verifyPassword(password , user.passwordHash);
 
   if (!valid) {
     return NextResponse.json({ error: "Invalid Password" }, { status: 401 });
