@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     const accessToken = signAccessToken({
       sub: user.id,
       email: user.email,
-      roles: user.roles,
+      roles: [user.roles],
       permissions: user.permissions,
     });
 
