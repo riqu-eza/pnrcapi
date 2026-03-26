@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     data: {
       email,
       passwordHash,
-      roles: ["tourist"],
+      roles: ["TOURIST"],
       permissions: [],
     },
   });
