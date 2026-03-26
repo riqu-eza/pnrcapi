@@ -599,7 +599,7 @@ model AppUser {
   phone                                                                          String?
 
   profile Json? // { firstName, lastName, avatar, bio }
-  roles   UserRole  @default(TOURIST)
+  roles   UserRole[]  @default([TOURIST])
   permissions                                                                    String[]
   locationPreferences Json? // { homeCity, favoriteCities, preferredCategories }
   stats Json? // { listingsCount, bookingsCount, reviewsCount }
