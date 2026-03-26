@@ -76,7 +76,7 @@ export async function POST(req: Request) {
           data: {
             email,
             emailVerified: true,
-            roles: ["tourist"],
+            roles: "TOURIST",
             permissions: [],
             profile: {
               firstName: payload.given_name,
