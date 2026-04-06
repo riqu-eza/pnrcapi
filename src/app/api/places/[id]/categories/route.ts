@@ -42,3 +42,35 @@ export async function PUT(request: Request, { params }: Params) {
     );
   }
 }
+// export async function DELETE(request: Request, { params }: Params) {
+//   try {
+//     const { id } = params;
+ 
+//     const body = await request.json();
+//     const parsed = unlinkPlaceCategoriesSchema.safeParse(body);
+ 
+//     if (!parsed.success) {
+//       return NextResponse.json(
+//         { status: "error", errors: parsed.error.flatten() },
+//         { status: 400 }
+//       );
+//     }
+ 
+//     const place = await unlinkPlaceFromCategories(id, parsed.data.categoryIds);
+ 
+//     return NextResponse.json({ status: "success", data: place }, { status: 200 });
+//   } catch (error: any) {
+//     console.error("DELETE /api/places/:id/categories error:", error);
+ 
+//     if (error.message?.includes("not found")) {
+//       return NextResponse.json(
+//         { status: "error", message: error.message },
+//         { status: 404 }
+//       );
+//     }
+//     return NextResponse.json(
+//       { status: "error", message: "Internal server error" },
+//       { status: 500 }
+//     );
+//   }
+// }
