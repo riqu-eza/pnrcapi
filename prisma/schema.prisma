@@ -160,6 +160,7 @@ model Place {
   isBookable                                                                               Boolean                     @default(false)
   pricing Json? // { min, max, unit }
   categoryLinks                                                                            PlaceCategory[]
+  
   // Operational & status
   status                                                                                   PlaceStatus                 @default(PENDING)
   verificationLevel                                                                        Int                         @default(0) // 0-3
