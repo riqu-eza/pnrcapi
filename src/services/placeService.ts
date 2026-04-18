@@ -381,7 +381,69 @@ export async function updatePlaceTaxonomy(
 // CHANGED: skipDuplicates (additive, not replace-all)
 // CHANGED: categoryId existence check before write
 // CHANGED: replaced hand-written include with FULL_PLACE_INCLUDE
+async function assertCategoriesExist(categoryIds: string[]): Promise<void> {
+  const found = await prisma.category.findMany({
+    where: { id: { in: categoryIds } },
+    select: { id: true },
+  });
+  if (found.length !== categoryIds.length) {
+    const foundIds = new Set(found.map((c) => c.id));
+    const missing = categoryIds.filter((id) => !foundIds.has(id));
+    throw new Error(`Categories not found: ${missing.join(", ")}`);
+  }
+}
 
+async function fetchFullPlace(placeId: string): Promise<FullPlace> {
+  const place = await prisma.place.findUnique({
+    where: { id: placeId },
+    ...FULL_PLACE_INCLUDE,
+  });
+  if (!place) throw new Error(`Place not found: ${placeId}`);
+  return place;
+}
+ 
+
+export async function replacePlaceCategories(
+  placeId: string,
+  categoryIds: string[],
+): Promise<FullPlace> {
+  const existing = await prisma.place.findUnique({
+    where: { id: placeId },
+    select: { id: true },
+  });
+  if (!existing) throw new Error(`Place not found: ${placeId}`);
+ 
+  await assertCategoriesExist(categoryIds);
+ 
+  await prisma.$transaction([
+    prisma.placeCategory.deleteMany({ where: { placeId } }),
+    prisma.placeCategory.createMany({
+      data: categoryIds.map((categoryId) => ({ placeId, categoryId })),
+    }),
+  ]);
+ 
+  return fetchFullPlace(placeId);
+}
+
+export async function unlinkPlaceFromCategories(
+  placeId: string,
+  categoryIds: string[],
+): Promise<FullPlace> {
+  const existing = await prisma.place.findUnique({
+    where: { id: placeId },
+    select: { id: true },
+  });
+  if (!existing) throw new Error(`Place not found: ${placeId}`);
+ 
+  await prisma.placeCategory.deleteMany({
+    where: {
+      placeId,
+      categoryId: { in: categoryIds },
+    },
+  });
+ 
+  return fetchFullPlace(placeId);
+}
 export async function linkPlaceToCategories(
   placeId: string,
   categoryIds: string[],
