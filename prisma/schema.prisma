@@ -620,6 +620,9 @@ model AppUser {
   blogPosts                                                                      BlogPost[]
   blogComments                                                                   BlogComment[]
   createdAt                                                                      DateTime        @default(now())
+  isVerified                                                                      Boolean         @default(false)
+  verifyToken                                                                     String?
+  verifyTokenExpiry                                                            DateTime?
 }
 
 model AuthIdentity {
